@@ -6700,6 +6700,120 @@ static PyObject* pybullet_getVREvents(PyObject* self, PyObject* args, PyObject* 
 	return Py_None;
 }
 
+static PyObject* pybullet_setOriginCameraPositionAndOrientation(PyObject* self, PyObject* args, PyObject* keywds)
+{
+	printf("pybullet set origin camera position and orientation\n");
+	b3SharedMemoryCommandHandle commandHandle;
+	b3SharedMemoryStatusHandle statusHandle;
+	int statusType;
+	int deviceTypeFilter = VR_DEVICE_CONTROLLER;
+	PyObject* PosObj = 0;
+	PyObject* OrnObj = 0;
+	double pos_offset[3];
+	double orn_offset[4];
+	int physicsClientId = 0;
+	int allAnalogAxes = 0;
+	b3PhysicsClientHandle sm = 0;
+	static char* kwlist[] = {"deviceTypeFilter", "allAnalogAxes", "physicsClientId", "pos_offset", "orn_offset", NULL};
+	if (!PyArg_ParseTupleAndKeywords(args, keywds, "|iiiOO", kwlist, &deviceTypeFilter, &allAnalogAxes, &physicsClientId, &PosObj, &OrnObj))
+	{
+		return NULL;
+	}
+
+	sm = getPhysicsClient(physicsClientId);
+	if (sm == 0)
+	{
+		PyErr_SetString(SpamError, "Not connected to physics server.");
+		return NULL;
+	}
+
+
+	commandHandle = b3RequestAndSetVREventsCommandInit(sm);
+
+	b3VREventsSetDeviceTypeFilter(commandHandle, deviceTypeFilter);
+
+	if (pybullet_internalSetVectord(PosObj, pos_offset))
+	{
+		printf("position offset");
+		printf("PosX=%f\n", pos_offset[0]);
+		printf("PosY=%f\n", pos_offset[1]);
+		printf("PosZ=%f\n", pos_offset[2]);
+		b3SetVRCameraPositionOffset(commandHandle, pos_offset);
+	}
+	if (pybullet_internalSetVector4d(OrnObj, orn_offset))
+	{
+		b3SetVRCameraOrientationOffset(commandHandle, orn_offset);
+	}
+
+	statusHandle = b3SubmitClientCommandAndWaitStatus(sm, commandHandle);
+	statusType = b3GetStatusType(statusHandle);
+
+	if (statusType == CMD_REQUEST_VR_EVENTS_DATA_COMPLETED)
+	{
+		struct b3VREventsData vrEvents;
+		PyObject* vrEventsObj;
+		int i = 0;
+		b3GetVREventsData(sm, &vrEvents);
+
+		vrEventsObj = PyTuple_New(vrEvents.m_numControllerEvents);
+		for (i = 0; i < vrEvents.m_numControllerEvents; i++)
+		{
+			int numFields = allAnalogAxes ? 9 : 8;
+			PyObject* vrEventObj = PyTuple_New(numFields);
+
+			PyTuple_SetItem(vrEventObj, 0, PyInt_FromLong(vrEvents.m_controllerEvents[i].m_controllerId));
+			{
+				PyObject* posObj = PyTuple_New(3);
+				PyTuple_SetItem(posObj, 0, PyFloat_FromDouble(vrEvents.m_controllerEvents[i].m_pos[0]));
+				PyTuple_SetItem(posObj, 1, PyFloat_FromDouble(vrEvents.m_controllerEvents[i].m_pos[1]));
+				PyTuple_SetItem(posObj, 2, PyFloat_FromDouble(vrEvents.m_controllerEvents[i].m_pos[2]));
+				PyTuple_SetItem(vrEventObj, 1, posObj);
+			}
+			{
+				PyObject* ornObj = PyTuple_New(4);
+				PyTuple_SetItem(ornObj, 0, PyFloat_FromDouble(vrEvents.m_controllerEvents[i].m_orn[0]));
+				PyTuple_SetItem(ornObj, 1, PyFloat_FromDouble(vrEvents.m_controllerEvents[i].m_orn[1]));
+				PyTuple_SetItem(ornObj, 2, PyFloat_FromDouble(vrEvents.m_controllerEvents[i].m_orn[2]));
+				PyTuple_SetItem(ornObj, 3, PyFloat_FromDouble(vrEvents.m_controllerEvents[i].m_orn[3]));
+				PyTuple_SetItem(vrEventObj, 2, ornObj);
+			}
+
+			PyTuple_SetItem(vrEventObj, 3, PyFloat_FromDouble(vrEvents.m_controllerEvents[i].m_analogAxis));
+			PyTuple_SetItem(vrEventObj, 4, PyInt_FromLong(vrEvents.m_controllerEvents[i].m_numButtonEvents));
+			PyTuple_SetItem(vrEventObj, 5, PyInt_FromLong(vrEvents.m_controllerEvents[i].m_numMoveEvents));
+			{
+				PyObject* buttonsObj = PyTuple_New(MAX_VR_BUTTONS);
+				int b;
+				for (b = 0; b < MAX_VR_BUTTONS; b++)
+				{
+					PyObject* button = PyInt_FromLong(vrEvents.m_controllerEvents[i].m_buttons[b]);
+					PyTuple_SetItem(buttonsObj, b, button);
+				}
+				PyTuple_SetItem(vrEventObj, 6, buttonsObj);
+			}
+			PyTuple_SetItem(vrEventObj, 7, PyInt_FromLong(vrEvents.m_controllerEvents[i].m_deviceType));
+
+			if (allAnalogAxes)
+			{
+				PyObject* buttonsObj = PyTuple_New(MAX_VR_ANALOG_AXIS * 2);
+				int b;
+				for (b = 0; b < MAX_VR_ANALOG_AXIS * 2; b++)
+				{
+					PyObject* axisVal = PyFloat_FromDouble(vrEvents.m_controllerEvents[i].m_auxAnalogAxis[b]);
+					PyTuple_SetItem(buttonsObj, b, axisVal);
+				}
+				PyTuple_SetItem(vrEventObj, 8, buttonsObj);
+			}
+
+			PyTuple_SetItem(vrEventsObj, i, vrEventObj);
+		}
+		return vrEventsObj;
+	}
+
+	Py_INCREF(Py_None);
+	return Py_None;
+}
+
 static PyObject* pybullet_getDebugVisualizerCamera(PyObject* self, PyObject* args, PyObject* keywds)
 {
 	int physicsClientId = 0;
@@ -12177,6 +12291,8 @@ static PyMethodDef SpamMethods[] = {
 	
 	{"getVREvents", (PyCFunction)pybullet_getVREvents, METH_VARARGS | METH_KEYWORDS,
 	 "Get Virtual Reality events, for example to track VR controllers position/buttons"},
+	{"setOriginCameraPositionAndOrientation", (PyCFunction)pybullet_setOriginCameraPositionAndOrientation, METH_VARARGS | METH_KEYWORDS,
+	 "set origin camera frame based on the Virtual Reality HMD events"},
 	{"setVRCameraState", (PyCFunction)pybullet_setVRCameraState, METH_VARARGS | METH_KEYWORDS,
 	 "Set properties of the VR Camera such as its root transform "
 	 "for teleporting or to track objects (camera inside a vehicle for example)."},

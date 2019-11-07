@@ -51,9 +51,14 @@ public:
 	virtual void removePickingConstraint() = 0;
 
 	virtual const btVector3& getVRTeleportPosition() const = 0;
+	virtual const btVector3& getVRTeleportPosition_init() const = 0;
+	virtual const btVector3& getVRTeleportPosition_prev() const = 0;
+
 	virtual void setVRTeleportPosition(const btVector3& vrReleportPos) = 0;
 
 	virtual const btQuaternion& getVRTeleportOrientation() const = 0;
+	virtual const btQuaternion& getVRTeleportOrientation_init() const = 0;
+	virtual const btQuaternion& getVRTeleportOrientation_prev() const = 0;
 	virtual void setVRTeleportOrientation(const btQuaternion& vrReleportOrn) = 0;
 
 	virtual void processClientCommands() = 0;

@@ -608,6 +608,8 @@ public:
 	void stopStateLogging(int stateLoggerUniqueId);
 
 	void getVREvents(b3VREventsData *vrEventsData, int deviceTypeFilter);
+	void setOriginCameraPositionAndOrientation(b3VREventsData* vrEventsData, int deviceTypeFilter, double pos_offset[3], double orn_offset[4]);
+	
 	void getKeyboardEvents(b3KeyboardEventsData *keyboardEventsData);
 
 	void submitProfileTiming(const std::string &profileName, int durationInMicroSeconds = 1);

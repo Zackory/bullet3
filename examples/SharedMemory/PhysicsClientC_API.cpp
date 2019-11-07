@@ -5266,14 +5266,58 @@ B3_SHARED_API b3SharedMemoryCommandHandle b3RequestVREventsCommandInit(b3Physics
 	return (b3SharedMemoryCommandHandle)command;
 }
 
+B3_SHARED_API b3SharedMemoryCommandHandle b3RequestAndSetVREventsCommandInit(b3PhysicsClientHandle physClient)
+{
+	b3Printf("b3RequestAndSetVREventsCommand\n");
+	PhysicsClient* cl = (PhysicsClient*)physClient;
+	b3Assert(cl);
+	b3Assert(cl->canSubmitCommand());
+	struct SharedMemoryCommand* command = cl->getAvailableSharedMemoryCommand();
+	b3Assert(command);
+
+	command->m_type = CMD_REQUEST_AND_SET_VR_EVENTS_DATA;
+	command->m_updateFlags = VR_DEVICE_CONTROLLER;
+	return (b3SharedMemoryCommandHandle)command;
+}
+
+
 B3_SHARED_API void b3VREventsSetDeviceTypeFilter(b3SharedMemoryCommandHandle commandHandle, int deviceTypeFilter)
 {
 	struct SharedMemoryCommand* command = (struct SharedMemoryCommand*)commandHandle;
 	b3Assert(command);
-	if (command->m_type == CMD_REQUEST_VR_EVENTS_DATA)
+	if ((command->m_type == CMD_REQUEST_VR_EVENTS_DATA) || (command->m_type == CMD_REQUEST_AND_SET_VR_EVENTS_DATA))
 	{
 		command->m_updateFlags = deviceTypeFilter;
 	}
+}
+
+B3_SHARED_API void b3SetVRCameraPositionOffset(b3SharedMemoryCommandHandle commandHandle, const double pos_offset[3])
+{
+	struct SharedMemoryCommand* command = (struct SharedMemoryCommand*)commandHandle;
+	b3Assert(command);
+	b3Assert(command->m_type == CMD_REQUEST_AND_SET_VR_EVENTS_DATA);
+	command->m_updateFlags |= VR_CAMERA_POSITION_OFFSET;
+
+	printf("position offset\n");
+	printf("OrientRoll=%f\n", pos_offset[0]);
+	printf("OrientPitch=%f\n", pos_offset[1]);
+	printf("OrientYaw=%f\n", pos_offset[2]);
+
+	command->m_CameraOffsetArguments.m_PosOffset[0] = pos_offset[0];
+	command->m_CameraOffsetArguments.m_PosOffset[1] = pos_offset[1];
+	command->m_CameraOffsetArguments.m_PosOffset[2] = pos_offset[2];
+}
+
+B3_SHARED_API void b3SetVRCameraOrientationOffset(b3SharedMemoryCommandHandle commandHandle, const double orn_offset[4])
+{
+	struct SharedMemoryCommand* command = (struct SharedMemoryCommand*)commandHandle;
+	b3Assert(command);
+	b3Assert(command->m_type == CMD_REQUEST_AND_SET_VR_EVENTS_DATA);
+	command->m_updateFlags |= VR_CAMERA_ORIENTATION_OFFSET;
+	command->m_CameraOffsetArguments.m_OrnOffset[0] = orn_offset[0];
+	command->m_CameraOffsetArguments.m_OrnOffset[1] = orn_offset[1];
+	command->m_CameraOffsetArguments.m_OrnOffset[2] = orn_offset[2];
+	command->m_CameraOffsetArguments.m_OrnOffset[3] = orn_offset[3];
 }
 
 B3_SHARED_API void b3GetVREventsData(b3PhysicsClientHandle physClient, struct b3VREventsData* vrEventsData)

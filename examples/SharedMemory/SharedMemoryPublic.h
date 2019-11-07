@@ -76,6 +76,7 @@ enum EnumSharedMemoryClientCommand
 	CMD_SET_SHADOW,
 	CMD_USER_DEBUG_DRAW,
 	CMD_REQUEST_VR_EVENTS_DATA,
+	CMD_REQUEST_AND_SET_VR_EVENTS_DATA,
 	CMD_SET_VR_CAMERA_STATE,
 	CMD_SYNC_BODY_INFO,
 	CMD_STATE_LOGGING,
@@ -514,6 +515,7 @@ struct b3VREventsData
 {
 	int m_numControllerEvents;
 	struct b3VRControllerEvent* m_controllerEvents;
+	int genderType;
 };
 
 struct b3KeyboardEvent

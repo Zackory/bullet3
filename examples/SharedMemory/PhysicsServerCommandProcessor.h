@@ -31,6 +31,7 @@ protected:
 	bool processUserDebugDrawCommand(const struct SharedMemoryCommand& clientCmd, struct SharedMemoryStatus& serverStatusOut, char* bufferServerToClient, int bufferSizeInBytes);
 	bool processSetVRCameraStateCommand(const struct SharedMemoryCommand& clientCmd, struct SharedMemoryStatus& serverStatusOut, char* bufferServerToClient, int bufferSizeInBytes);
 	bool processRequestVREventsCommand(const struct SharedMemoryCommand& clientCmd, struct SharedMemoryStatus& serverStatusOut, char* bufferServerToClient, int bufferSizeInBytes);
+	bool processRequestAndSetVREventsCommand(const struct SharedMemoryCommand& clientCmd, struct SharedMemoryStatus& serverStatusOut, char* bufferServerToClient, int bufferSizeInBytes);
 	bool processRequestMouseEventsCommand(const struct SharedMemoryCommand& clientCmd, struct SharedMemoryStatus& serverStatusOut, char* bufferServerToClient, int bufferSizeInBytes);
 	bool processRequestKeyboardEventsCommand(const struct SharedMemoryCommand& clientCmd, struct SharedMemoryStatus& serverStatusOut, char* bufferServerToClient, int bufferSizeInBytes);
 	bool processRequestRaycastIntersectionsCommand(const struct SharedMemoryCommand& clientCmd, struct SharedMemoryStatus& serverStatusOut, char* bufferServerToClient, int bufferSizeInBytes);
@@ -170,9 +171,13 @@ public:
 	virtual void setTimeOut(double timeOutInSeconds);
 
 	virtual const btVector3& getVRTeleportPosition() const;
+	virtual const btVector3& getVRTeleportPosition_init() const;
+	virtual const btVector3& getVRTeleportPosition_prev() const;
 	virtual void setVRTeleportPosition(const btVector3& vrTeleportPos);
 
 	virtual const btQuaternion& getVRTeleportOrientation() const;
+	virtual const btQuaternion& getVRTeleportOrientation_init() const;
+	virtual const btQuaternion& getVRTeleportOrientation_prev() const;
 	virtual void setVRTeleportOrientation(const btQuaternion& vrTeleportOrn);
 
 private:

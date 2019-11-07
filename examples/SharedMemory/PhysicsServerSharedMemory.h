@@ -39,9 +39,13 @@ public:
 	virtual void removePickingConstraint();
 
 	virtual const btVector3& getVRTeleportPosition() const;
+	virtual const btVector3& getVRTeleportPosition_init() const;
+	virtual const btVector3& getVRTeleportPosition_prev() const;
 	virtual void setVRTeleportPosition(const btVector3& vrTeleportPos);
 
 	virtual const btQuaternion& getVRTeleportOrientation() const;
+	virtual const btQuaternion& getVRTeleportOrientation_init() const;
+	virtual const btQuaternion& getVRTeleportOrientation_prev() const;
 	virtual void setVRTeleportOrientation(const btQuaternion& vrTeleportOrn);
 
 	//for physicsDebugDraw and renderScene are mainly for debugging purposes
